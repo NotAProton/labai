@@ -1,0 +1,347 @@
+/* ═══════════════════════════════════════════════════════════════
+   report.css  –  LaTeX-inspired academic lab report stylesheet
+   Black & white only. Designed for A4 PDF via puppeteer.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Web font: Computer Modern (closest web equivalent to LaTeX) ── */
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap');
+
+/* ── Base reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Root typography ── */
+:root {
+  --font-serif: 'Times New Roman', Times, serif;
+  --font-mono:  'Courier New', Courier, monospace;
+  --base-size:  11pt;
+  --line-height: 1.6;
+  --text-color: #000000;
+  --rule-color: #000000;
+}
+
+html, body {
+  font-family: var(--font-serif);
+  font-size: var(--base-size);
+  line-height: var(--line-height);
+  color: var(--text-color);
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ══════════════════════════════════════════
+   TITLE PAGE
+   ══════════════════════════════════════════ */
+
+.title-page {
+  page-break-after: always;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 60pt 0;
+}
+
+.title-page__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18pt;
+}
+
+/* Double rule at top and bottom — classic academic look */
+.title-rule {
+  width: 100%;
+  border: none;
+}
+
+.title-rule::before,
+.title-rule::after {
+  content: '';
+  display: block;
+  width: 100%;
+  border-top: 1pt solid var(--rule-color);
+}
+
+.title-rule::before {
+  margin-bottom: 3pt;
+}
+
+.title-page__course {
+  font-size: 14pt;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 8pt;
+}
+
+.title-page__labtitle {
+  font-size: 28pt;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.title-page__subtitle {
+  font-size: 13pt;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  margin-bottom: 8pt;
+}
+
+/* Metadata table on the title page */
+.title-meta {
+  border-collapse: collapse;
+  margin-top: 12pt;
+  font-size: 11pt;
+  text-align: left;
+}
+
+.title-meta td {
+  padding: 4pt 8pt;
+  vertical-align: top;
+  border: none;
+}
+
+.meta-label {
+  font-weight: bold;
+  white-space: nowrap;
+  width: 110pt;
+}
+
+.meta-colon {
+  width: 16pt;
+  text-align: center;
+}
+
+.meta-value {
+  font-style: normal;
+}
+
+/* ══════════════════════════════════════════
+   REPORT BODY
+   ══════════════════════════════════════════ */
+
+.report-body {
+  /* Puppeteer handles physical margins; only set logical spacing here */
+}
+
+/* ── Headings ── */
+
+.heading-2 {           /* ## – Section heading  */
+  font-size: 15pt;
+  font-weight: bold;
+  margin-top: 22pt;
+  margin-bottom: 8pt;
+  padding-bottom: 3pt;
+  border-bottom: 1pt solid var(--rule-color);
+  page-break-after: avoid;
+  letter-spacing: 0.01em;
+}
+
+/* Special case: very first h2 after the title page is the Overview */
+.report-body > h2.heading-2:first-child {
+  margin-top: 0;
+}
+
+.heading-3 {           /* ### – Sub-section / Step heading  */
+  font-size: 12pt;
+  font-weight: bold;
+  font-style: italic;
+  margin-top: 14pt;
+  margin-bottom: 5pt;
+  page-break-after: avoid;
+}
+
+.heading-4 {           /* #### */
+  font-size: 11pt;
+  font-weight: bold;
+  margin-top: 10pt;
+  margin-bottom: 4pt;
+  page-break-after: avoid;
+}
+
+/* ── Paragraphs ── */
+
+p {
+  margin-bottom: 8pt;
+  text-align: justify;
+  hyphens: auto;
+  orphans: 3;
+  widows: 3;
+}
+
+/* ── Horizontal rule → section divider ── */
+
+.section-divider {
+  width: 60%;
+  margin: 20pt auto;
+  border-top: 0.8pt solid var(--rule-color);
+}
+
+/* ── Figures ── */
+
+.lab-figure {
+  display: block;
+  margin: 18pt auto;
+  text-align: center;
+  page-break-inside: avoid;
+  max-width: 100%;
+}
+
+.lab-figure img {
+  display: block;
+  max-width: 90%;
+  max-height: 320pt;    /* prevent full-page blowout */
+  height: auto;
+  margin: 0 auto 6pt;
+  border: 0.5pt solid #000;  /* thin border — LaTeX convention */
+}
+
+figcaption {
+  font-size: 9.5pt;
+  font-style: italic;
+  text-align: center;
+  margin-top: 4pt;
+  color: var(--text-color);
+}
+
+/* ── Inline code ── */
+
+code {
+  font-family: var(--font-mono);
+  font-size: 9.5pt;
+  background: #f0f0f0;
+  border: 0.5pt solid #ccc;
+  padding: 1pt 3pt;
+  border-radius: 2pt;
+}
+
+/* ── Code blocks ── */
+
+pre {
+  font-family: var(--font-mono);
+  font-size: 9pt;
+  line-height: 1.45;
+  background: #f4f4f4;
+  border: 0.5pt solid #aaa;
+  border-left: 3pt solid #000;
+  padding: 8pt 10pt;
+  margin: 10pt 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  page-break-inside: avoid;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* ── Block-quotes ── */
+
+blockquote {
+  margin: 10pt 0 10pt 20pt;
+  padding: 4pt 10pt;
+  border-left: 2pt solid #555;
+  font-style: italic;
+}
+
+/* ── Lists ── */
+
+ul, ol {
+  margin: 6pt 0 8pt 20pt;
+  padding-left: 12pt;
+}
+
+li {
+  margin-bottom: 3pt;
+  text-align: justify;
+}
+
+/* ── Tables ── */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12pt 0;
+  font-size: 10pt;
+  page-break-inside: avoid;
+}
+
+thead tr {
+  border-bottom: 1.5pt solid #000;
+}
+
+thead th {
+  font-weight: bold;
+  padding: 5pt 8pt;
+  text-align: left;
+  border-bottom: 1pt solid #000;
+}
+
+tbody td {
+  padding: 4pt 8pt;
+  border-bottom: 0.5pt solid #999;
+  vertical-align: top;
+}
+
+tbody tr:last-child td {
+  border-bottom: 1pt solid #000;
+}
+
+/* ── Horizontal rule (raw <hr>) – fallback if renderer not triggered ── */
+
+hr {
+  border: none;
+  border-top: 0.8pt solid var(--rule-color);
+  margin: 20pt auto;
+  width: 60%;
+}
+
+/* ── Links – plain in print ── */
+
+a {
+  color: #000;
+  text-decoration: underline;
+}
+
+/* ══════════════════════════════════════════
+   PRINT OVERRIDES
+   ══════════════════════════════════════════ */
+
+@media print {
+  .title-page {
+    page-break-after: always;
+  }
+
+  h2, h3, h4 {
+    page-break-after: avoid;
+  }
+
+  .lab-figure, pre, table, blockquote {
+    page-break-inside: avoid;
+  }
+
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  code {
+    background: #eee;
+  }
+}

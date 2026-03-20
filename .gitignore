@@ -1,0 +1,9 @@
+*.pdf
+*.md
+*.png
+transcriptions/
+node_modules/
+__pycache__/
+*.pyc
+*.log
+*.env
