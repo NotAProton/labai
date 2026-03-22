@@ -99,14 +99,14 @@
 % Figure frame / box
 \usepackage{mdframed}
 \mdfdefinestyle{figbox}{
-  linecolor=light,
-  linewidth=1pt,
-  innertopmargin=6pt,
-  innerbottommargin=6pt,
-  innerrightmargin=8pt,
-  innerleftmargin=8pt,
-  backgroundcolor=verylightgray,
-  roundcorner=3pt
+  linecolor=ink,
+  linewidth=0.4pt,
+  innertopmargin=2pt,
+  innerbottommargin=2pt,
+  innerrightmargin=2pt,
+  innerleftmargin=2pt,
+  backgroundcolor=white,
+  roundcorner=0pt
 }
 
 % ── Highlighted Answer Box ───────────────────────────────────
@@ -162,12 +162,12 @@
 }
 
 % Screenshot figure  →  \screenshot[width]{file}{Caption text}
-\newcommand{\screenshot}[3][0.92\textwidth]{%
+\newcommand{\screenshot}[3][\linewidth]{%
   \begin{figure}[H]
     \centering
     \begin{mdframed}[style=figbox]
       \centering
-      \includegraphics[width=#1]{#2}
+      \includegraphics[width=\dimexpr#1-4pt\relax]{#2}
     \end{mdframed}
     \caption{#3}
   \end{figure}%
@@ -195,6 +195,9 @@
     Akshat Ajit Saraswat      & 2023BCY0048 \\
   \end{tabular}%
 }
+
+% Initialize module counter
+\setcounter{modnum}{2}
 
 % ============================================================
 %  DOCUMENT
@@ -264,39 +267,74 @@
 }
 \thispagestyle{empty}
 
-% ── PAGE 3+: REPORT CONTENT ──────────────────────────────────
 \newpage
 \setcounter{page}{1}
 \pagestyle{fancy}
 
-% ──────────────────────────────────────────────────────────────
-%  MODULE 1
-% ──────────────────────────────────────────────────────────────
-\module{OS}
+% ── PAGE 3+: REPORT CONTENT ────────────────────────────────
 
-% ──────────────────────────────────────────────────────────────
-%  Q1
-% ──────────────────────────────────────────────────────────────
-\question{Find the IP address used by the Threat Actor}
+\module{OS Part 1}
 
-We begin by loading the provided \texttt{.pcap} capture file into Wireshark for analysis.
-Navigate to \textbf{File → Open} and select the capture file.
-Once loaded, sort by the \textit{Protocol} column and filter for suspicious outbound traffic.
+\question{Locate user accounts and user specific hives.}
 
-\screenshot{example-image-a}{Wireshark 2.17.8 — Packet capture overview showing traffic from the suspect host}
+Axiom lists User Accounts under Artifacts → Operating System → User Accounts. Here we find users \texttt{ryanJ} and \texttt{RJennings}.
+\screenshot{lab5img/01.png}{Axiom Examine v9.11: User Accounts artifact showing two users: ryanJ and RJennings}
+For the hives we switch to the File System view in AXIOM and navigate to \texttt{C:\textbackslash Users\textbackslash RJennings} where we find the user-specific registry hives: \texttt{NTUSER.DAT}.
+\screenshot{lab5img/02.png}{Axiom Examine v9.11: File System view showing RJennings user folder with NTUSER.DAT hive}
+We can see the same for \texttt{ryanJ} under \texttt{C:\textbackslash Users\textbackslash ryanJ}.
+\screenshot{lab5img/03.png}{Axiom Examine v9.11: File System view showing ryanJ user folder with NTUSER.DAT hive}
 
-Examining the highlighted stream, we can identify the source IP of repeated outbound connection attempts to an external command-and-control server.
+\ansbox{The user accounts are \ans{ryanJ} and \ans{RJennings}.}
 
-\ansbox{The threat actor's IP address is \ans{191.19.11.11}.}
+\question{Identify the allocated and unallocated area in bytes on the disk.}
+In Axiom, we can find partition information under File System → Disk Name → Partitions with details on allocated and unallocated space for each partition. We can see \texttt{Partition 1}, \texttt{Partition 3}, \texttt{Partition 4} and \texttt{Partition 5} with their respective allocated and unallocated sizes in bytes.
+\screenshot{lab5img/04.png}{Axiom Examine v9.11: File System view showing Partition 1 details}
+\screenshot{lab5img/05.png}{Axiom Examine v9.11: File System view showing Partition 3 details}
+\screenshot{lab5img/06.png}{Axiom Examine v9.11: File System view showing Partition 4 details}
+\screenshot{lab5img/07.png}{Axiom Examine v9.11: File System view showing Partition 5 details}
 
-% ──────────────────────────────────────────────────────────────
-%  MODULE 2
-% ──────────────────────────────────────────────────────────────
+\begin{table}[H]
+  \centering
+  \caption{Partition Unallocated Space Summary}
+  \label{tab:partition-unallocated-space}
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Partition Name} & \textbf{Unallocated Bytes} & \textbf{Unallocated (GB)} \\
+    \midrule
+    Partition 1 & 215,408,640 & 0.21 \\
+    Partition 3 & 170,017,382,400 & 170.01 \\
+    Partition 4 & 491,462,656 & 0.49 \\
+    Partition 5 & 552,022,016 & 0.55 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\ansbox{There is a total of \ans{171.26 GB} of unallocated space. Refer to \autoref{tab:partition-unallocated-space} for specific allocation metrics.}
+
+\question{How can an investigator confirm if the accused has reinstalled the OS trying to destroy potential evidence? How can the investigator get the original OS installation date?}
+To determine if the OS has been reinstalled, an investigator should:
+
+\begin{enumerate}
+  \item Look for a \texttt{windows.old} folder in the File System view, which indicates a previous OS installation.
+  \item Check the installation date in System Information and compare it with other file creation dates to identify timeline inconsistencies suggesting a recent OS reinstallation.
+\end{enumerate}
+
+The \textbf{OS installation date} can be obtained directly from Artifacts → Operating System → System Information, which displays the exact timestamp of when Windows was installed on the system.
+\screenshot{lab5img/08.png}{Axiom Examine v9.11: System Information artifact showing OS installation date as 12-01-2022 13:54:15}
+
+In our case no \texttt{windows.old} folder is present.
+
+\ansbox{Signs of OS reinstallation include: (1) presence of \ans{windows.old} folder and, (2) recent OS installation date compared to user file dates. The OS installation date is \ans{12-01-2022 13:54:15}.}
+
+\question{What is the timezone information of the imaged system?}
+
+Timezone information can be found in Artifacts → Operating System → Timezone Information.
+\screenshot{lab5img/09.png}{Axiom Examine v9.11: System Information artifact showing Time Zone as UTC-05:00 Indiana (East)}
+
+\ansbox{The timezone of the imaged system is \ans{UTC-05:00 Indiana (East)}.}
+
 \module{Encryption and Credentials}
 
-% ──────────────────────────────────────────────────────────────
-%  Q1
-% ──────────────────────────────────────────────────────────────
 \question{Identify the port used for exfiltration}
 
 Apply the display filter \texttt{ip.src == 191.19.11.11} to isolate packets originating from the threat actor.
@@ -308,9 +346,6 @@ The repeated SYN packets confirm a persistent connection attempt on an uncommon 
 
 \ansbox{The exfiltration port is \ans{4444} (non-standard, typically associated with reverse shells).}
 
-% ──────────────────────────────────────────────────────────────
-%  Q3
-% ──────────────────────────────────────────────────────────────
 \question{Determine the protocol used in the attack}
 
 Follow the TCP stream (\textbf{right-click → Follow → TCP Stream}) on one of the suspicious packets.
