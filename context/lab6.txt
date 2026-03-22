@@ -1,0 +1,76 @@
+﻿Questions based on Module Refined Results 
+    1. View the source for Google search queries and Parsed Queries, Explore contents of History SQLite database.
+    2. Select Parsed Search Queries. filter and search for “air tag”
+Select the search “can an air tag be traced to the owner”.
+    A. Note the difference in the Search Term and the Original Search Query columns.
+    B. In the Details card, view the URL field.  Note that the Search Term (q=) and the Original Search Query (pq=) are both in the URL. The Original Search Query is the actual text typed by the user. The Search Term is the search that was conducted
+    3. Select Parsed Search Queries. Filter for searches conducted on Youtube. What was the user searching for on youtube.
+    4. Classified Search - determine if the user has searched any classifieds sites looking to purchase a drone
+    5. What specific type of drone did the user search for? 
+    6. Did the user search for anything else at Amazon related to drones
+    7. determine if the user purchased a drone from amazon
+    8. Check if any purchase receipts are there in documents 
+    9. Take artifact category Facebook URLs,  Sort the URL column alphabetically (arrow pointing up). Scroll through the URLs. Do you see any information that would indicate what searches are being done?  
+    10. Filter the URL column for the term ‘q=’.  Sort the Date/Time column chronologically (arrow pointing up). What types of searches is the user conducting?
+    11. What web browsers did the user use to conduct the searches?
+    12. Click on the artifact category Social Media URLs. What Instagram accounts is the user viewing?
+    13. What is the user searching for on Flickr? Did the user access any Flickr sites containing drone aerial shots?
+    14. In the search bar, apply a filter to the Artifacts drop-down category so that only artifacts with the word ‘maps’ are displayed. These will include Google Maps Queries, Google, Maps, and Google Maps Tiles. Explore the world map preview feature. Where do the Google Maps Queries map to?
+    15. Navigate to REFINED RESULTS > Rebuilt Web Pages.
+Apply a filter to the Page Title column for ‘Tor’.
+Click on the Created Date/Time column once to place the entries in chronological order.
+View the entries in the Pate Title column. Note the entries of Tor Project | Download and Tor Project | Success. It appears that the user went to the Tor download page at and successfully completed the download.
+    16.  CREATING A PROFILE:  CASEY NEWTON – 
+Select IDENTIFIERS- PEOPLE
+    - In the search box, conduct a search for Casey. Highlight all the results.
+    - Click on the Tags, Comments and Profiles Pane.
+    - In the PROFILES section, click CREATE NEW PROFILE.
+    - Enter a Profile name of “Casey Newton” and click OKAY.
+    - 
+    - Note that the identifiers now show a silhouette icon to indicate that they are part of a profile
+    - 
+    - Conduct searches on the other information that you have on Casey Newton and add any further identifiers to the profile.
+    - Once you have searched for all the identifiers and are confident that you have added all of them to the profile, clear all filters.
+
+    17. Are there any saved credit cards on the computer? If so, what name is the card under and what is the expiration date? 
+    18. What is the login name and password for Ryan Jennings’s Facebook account?
+    19. In general, what types of searches was the user conducting on 8/25/2022 using Google? 
+    20. How many times did the user navigate to the file IMG_0041.jpg and open it by double-clicking on it?
+    21. What is depicted in the file IMG_0041.jpg?
+    22. The user conducted searches related to carrying a dog using a drone. What search engine did they use for this?
+    23. On which two drives did the user access the file Drone Receipt.pdf?
+
+
+
+
+Questions based on Web Related Module
+
+    1. Did the user have cookies related to drone pages
+    2. From these cookies, can you tell if the user registered his drone?
+    3. Can you determine if the user visited the site droneregistration.com or if he received the cookie from a third party?
+
+    4. Was there any information downloaded related to explosives
+    5. What is the document named M112-Demolition-Block-released-1-22-20.pdf related to? Where was this document downloaded from? 
+    6. How did the user find this web site?
+
+    7. What websites does the user have log-in accounts for? Can you determine the log-in name and password for the accounts? 
+    8. there are several sites bookmarked in Chrome Bookmarks. How many times did the user visit each of these sites? 
+Opensearch.org
+Osint.link 
+Hobbyhenry.com
+
+    9. The user of this computer is confronted with the fact that they have been doing research related to explosives.  They deny doing such research and state that if there is anything on their computer, it is likely due to a virus that they received. We want to determine attribution where we can show that the user was aware of files related to explosives; that they accessed the files; and that they accessed them on not only the hard drive, but on a thumb drive. 
+
+    10. What is Ryan Jennings home address?
+
+
+    11. Using Google Chrome, the user downloaded a movie file from iCloud.  What does this file depict?
+
+    12. What is the expiration date on the credit card that Ryan Jennings has saved?
+
+
+    13. What is the ranking of yankees.com as a Chrome Top site?
+
+    14. How many times has the user visited Instagram using Chrome?
+    15. Who was the user searching (people) for using the Firefox searchbar?
+    16. What file was downloaded using the Brave browser?  

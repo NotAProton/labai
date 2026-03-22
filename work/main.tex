@@ -1,0 +1,331 @@
+% ============================================================
+%  LAB REPORT TEMPLATE — Modern Grayscale
+%  Compile with: pdflatex lab_report_template.tex
+% ============================================================
+
+\documentclass[12pt, a4paper]{report}
+
+% ── Encoding & Language ──────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+% ── Modern Typeface (Source Sans / Source Serif) ─────────────
+\usepackage{sourcesans}          % sans-serif body (replaces sourcesanspro)
+\usepackage{sourceserif}         % serif for display/headings (replaces sourceserifpro)
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Page Geometry ────────────────────────────────────────────
+\usepackage[
+  top=2.5cm, bottom=2.5cm,
+  left=2.8cm, right=2.8cm,
+  headheight=14pt
+]{geometry}
+
+% ── Color (grayscale palette) ────────────────────────────────
+\usepackage{xcolor}
+\definecolor{ink}{gray}{0.08}          % near-black text
+\definecolor{accent}{gray}{0.22}       % headings / rules
+\definecolor{mid}{gray}{0.48}          % captions / labels
+\definecolor{light}{gray}{0.88}        % rule fills / table rows
+\definecolor{verylightgray}{gray}{0.95}% shaded boxes
+
+% ── Typography & Spacing ─────────────────────────────────────
+\usepackage{microtype}
+\usepackage{setspace}
+\setstretch{1.25}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% ── Headers & Footers ────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{light}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\color{mid}\small\textit{Lab \labnum\ — \labtitle}}
+\fancyhead[R]{\color{mid}\small\coursecode}
+\fancyfoot[C]{\color{mid}\small\thepage}
+
+% ── Section Styling ──────────────────────────────────────────
+\usepackage{titlesec}
+
+% Chapter (used as Q-style heading override — see below)
+\titleformat{\chapter}[display]
+  {\color{accent}\sffamily\Large\bfseries}
+  {}
+  {0pt}
+  {\huge}
+\titlespacing*{\chapter}{0pt}{-30pt}{12pt}
+
+% Section → Q-level heading
+\titleformat{\section}
+  {\color{accent}\sffamily\large\bfseries}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\section}{0pt}{18pt}{6pt}
+
+% Subsection
+\titleformat{\subsection}
+  {\color{accent}\sffamily\normalsize\bfseries}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+
+% ── Table of Contents ────────────────────────────────────────
+\usepackage{titletoc}
+\usepackage{tocloft}
+\renewcommand{\cftchapfont}{\sffamily\bfseries\color{accent}}
+\renewcommand{\cftsecfont}{\sffamily\color{ink}}
+\renewcommand{\cftchapleader}{\color{light}\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsecleader}{\color{light}\cftdotfill{\cftdotsep}}
+\renewcommand{\cftchappagefont}{\sffamily\bfseries\color{accent}}
+\renewcommand{\cftsecpagefont}{\sffamily\color{mid}}
+\setlength{\cftbeforechapskip}{6pt}
+
+% ── Figures & Captions ───────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[
+  labelfont={bf, color=accent},
+  textfont={color=mid},
+  font=small,
+  justification=centering,
+  skip=6pt
+]{caption}
+
+% Figure frame / box
+\usepackage{mdframed}
+\mdfdefinestyle{figbox}{
+  linecolor=light,
+  linewidth=1pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  innerrightmargin=8pt,
+  innerleftmargin=8pt,
+  backgroundcolor=verylightgray,
+  roundcorner=3pt
+}
+
+% ── Highlighted Answer Box ───────────────────────────────────
+\mdfdefinestyle{answerbox}{
+  linecolor=accent,
+  linewidth=1.2pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  innerrightmargin=10pt,
+  innerleftmargin=10pt,
+  backgroundcolor=verylightgray,
+  roundcorner=4pt
+}
+
+% ── Hyperlinks ───────────────────────────────────────────────
+\usepackage[
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  citecolor=mid,
+  pdftitle={Lab Report},
+  pdfauthor={Team}
+]{hyperref}
+
+% ── Misc Utilities ───────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=*, itemsep=2pt, topsep=4pt}
+\usepackage{lipsum}     % remove in real report
+
+% ── Custom Commands ──────────────────────────────────────────
+
+% Bold inline answer  →  \ans{value}
+\newcommand{\ans}[1]{%
+  \textbf{\color{accent}#1}%
+}
+
+% Module heading  →  \module{Module Title}
+\newcounter{modnum}
+\newcommand{\module}[1]{%
+  \stepcounter{modnum}%
+  \setcounter{qnum}{0}%
+  \chapter*{Module \arabic{modnum}: #1}%
+  \addcontentsline{toc}{chapter}{Module \arabic{modnum}: #1}%
+}
+
+% Q&A question heading  →  \question{Question text}
+\newcounter{qnum}
+\newcommand{\question}[1]{%
+  \stepcounter{qnum}%
+  \section*{Q\arabic{modnum}.\arabic{qnum})\quad #1}%
+  \addcontentsline{toc}{section}{Q\arabic{modnum}.\arabic{qnum}: #1}%
+}
+
+% Screenshot figure  →  \screenshot[width]{file}{Caption text}
+\newcommand{\screenshot}[3][0.92\textwidth]{%
+  \begin{figure}[H]
+    \centering
+    \begin{mdframed}[style=figbox]
+      \centering
+      \includegraphics[width=#1]{#2}
+    \end{mdframed}
+    \caption{#3}
+  \end{figure}%
+}
+
+% Inline answer highlight box  →  \ansbox{Full answer sentence}
+\newcommand{\ansbox}[1]{%
+    \vspace{8pt}%
+    \begin{mdframed}[style=answerbox]
+        \textbf{Answer:}\quad #1
+    \end{mdframed}%
+}
+
+% ── Lab Metadata — EDIT THESE ────────────────────────────────
+\newcommand{\coursename}{Digital Forensics}
+\newcommand{\coursecode}{CBE322}
+\newcommand{\labnum}{5}
+\newcommand{\labtitle}{Magnet AXIOM: OS, Encryption and Credentials}
+\newcommand{\labdate}{March 22, 2026}
+
+% Team members: \member{Name}{Roll Number}
+\newcommand{\teamtable}{%
+  \begin{tabular}{ll}
+    Kandarp Jindal          & 2023BCY0044 \\
+    Akshat Ajit Saraswat      & 2023BCY0048 \\
+  \end{tabular}%
+}
+
+% ============================================================
+%  DOCUMENT
+% ============================================================
+\begin{document}
+
+% ── PAGE 1: TITLE PAGE ───────────────────────────────────────
+\begin{titlepage}
+  \thispagestyle{empty}
+  \pagecolor{white}
+
+  % Top rule
+  {\color{accent}\rule{\linewidth}{2.5pt}}
+  \vspace{0.5em}
+
+  % Course line
+  {\color{mid}\sffamily\large
+    \textbf{\coursename} \hfill \textbf{\coursecode}
+  }
+
+  \vspace{0.3em}
+  {\color{light}\rule{\linewidth}{0.8pt}}
+
+  \vspace{3.5cm}
+
+  % Lab number chip
+  \begin{center}
+    {\color{accent}\sffamily\fontsize{11}{13}\selectfont
+      \textls[120]{LAB \labnum}}\\[6pt]
+    {\color{ink}\sffamily\fontsize{26}{32}\selectfont\bfseries \labtitle}
+  \end{center}
+
+  \vspace{3cm}
+
+  % Date
+  \begin{center}
+    {\color{mid}\sffamily\large \labdate}
+  \end{center}
+
+  \vspace{2.5cm}
+
+  % Team box
+\begin{center}
+        {\large \teamtable}
+\end{center}
+
+  \vfill
+
+  % Bottom rule
+  {\color{light}\rule{\linewidth}{0.8pt}}
+  \vspace{0.4em}
+  {\color{accent}\rule{\linewidth}{2.5pt}}
+\end{titlepage}
+
+% ── PAGE 2: TABLE OF CONTENTS ────────────────────────────────
+\newpage
+\thispagestyle{empty}
+
+\vspace*{1cm}
+{\color{accent}\sffamily\Huge\bfseries Index}\\[4pt]
+{\color{accent}\rule{\linewidth}{2pt}}
+\vspace{1cm}
+
+{
+  \setstretch{1.5}
+  \tableofcontents
+}
+\thispagestyle{empty}
+
+% ── PAGE 3+: REPORT CONTENT ──────────────────────────────────
+\newpage
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+% ──────────────────────────────────────────────────────────────
+%  MODULE 1
+% ──────────────────────────────────────────────────────────────
+\module{OS}
+
+% ──────────────────────────────────────────────────────────────
+%  Q1
+% ──────────────────────────────────────────────────────────────
+\question{Find the IP address used by the Threat Actor}
+
+We begin by loading the provided \texttt{.pcap} capture file into Wireshark for analysis.
+Navigate to \textbf{File → Open} and select the capture file.
+Once loaded, sort by the \textit{Protocol} column and filter for suspicious outbound traffic.
+
+\screenshot{example-image-a}{Wireshark 2.17.8 — Packet capture overview showing traffic from the suspect host}
+
+Examining the highlighted stream, we can identify the source IP of repeated outbound connection attempts to an external command-and-control server.
+
+\ansbox{The threat actor's IP address is \ans{191.19.11.11}.}
+
+% ──────────────────────────────────────────────────────────────
+%  MODULE 2
+% ──────────────────────────────────────────────────────────────
+\module{Encryption and Credentials}
+
+% ──────────────────────────────────────────────────────────────
+%  Q1
+% ──────────────────────────────────────────────────────────────
+\question{Identify the port used for exfiltration}
+
+Apply the display filter \texttt{ip.src == 191.19.11.11} to isolate packets originating from the threat actor.
+Inspect the \textbf{Transport Layer} details in the packet dissection panel.
+
+\screenshot{example-image-b}{Wireshark — Filtered view showing repeated SYN packets on port 4444}
+
+The repeated SYN packets confirm a persistent connection attempt on an uncommon port.
+
+\ansbox{The exfiltration port is \ans{4444} (non-standard, typically associated with reverse shells).}
+
+% ──────────────────────────────────────────────────────────────
+%  Q3
+% ──────────────────────────────────────────────────────────────
+\question{Determine the protocol used in the attack}
+
+Follow the TCP stream (\textbf{right-click → Follow → TCP Stream}) on one of the suspicious packets.
+The stream data reveals cleartext commands consistent with a Netcat-style reverse shell session.
+
+\screenshot{example-image-c}{Wireshark — TCP Stream reconstruction showing shell commands in plaintext}
+
+The lack of encryption and the command-response pattern confirm the protocol in use.
+
+\ansbox{The attack leveraged a raw \ans{TCP reverse shell} (Netcat) over port 4444.}
+
+% ──────────────────────────────────────────────────────────────
+%  ADD MORE MODULES / QUESTIONS BELOW
+%  New module  →  \module{Title}        (resets question counter)
+%  New question →  \question{Title}
+% ──────────────────────────────────────────────────────────────
+
+\end{document}

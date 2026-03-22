@@ -1,0 +1,77 @@
+﻿Questions on Email & Calendar Module (7)
+    1. Casey Newton sent Ryan Jennings an email with the subject line Re:  So Many Options
+    - Was the mail send from phone or computer. If phone which OS
+    - What is the origin IP address of the mail
+    - Who is the registered owner of the IP address
+    - Where does the IP map to geographically
+
+    2. Ryan Jennings received 2 emails from Microsoft that contained account security codes. What codes did he receive?
+    3. Ryan Jennings emailed Casey Newton a .pdf document for a drone receipt. What was the total cost of the purchase?
+    4. Did Ryan mail IMG_0041.jpg image to anyone? To whom?
+    5. Review all emails that have picture files attached. What pictures of evidentiary value are there? 
+    6. Ryan Jennings received a Delivery Status Notification email that an email he sent failed to deliver. What is the reason that the email failed? 
+    7. Amazon has a service called Amazon Answers where a user can ask a questions about a product. Ryan Jennings asked a question about the DJI Phantom 4 Advanced+ drone.  What answer did he receive from Amazon Answers?  
+    8. Ryan Jennings contacted Chevrolet for information on a vehicle. What vehicle was he inquiring about?
+    9. What service does Ryan Jennings have to manage cryptocurrency?
+    10. Ryan Jennings was shopping at eBay and put several items in his cart. He then left eBay without purchasing anything. what were these items?
+
+QUESTIONS on DOCUMENTS Module (8)
+    1. Analyse the metadata for Drug_testing_policy_8.10.17.docx. 
+    - Who created the document and when
+    - When was the document saved to Ryan Jennings computer
+    - Did Ryan modify the document
+    2. How did the user find the file No-Fly-Zone.pdf, and which browser was used to download the file
+    3. To what two locations was the file ‘drone flying zones.docx’ saved? 
+    4. When was the document ‘Drones---What_Could_Possibly_Go_Wrong(2).pptx’ created? Did Ryan Jennings ever edit this document? 
+    5. To whom did Ryan Jennings email this document and when? 
+
+
+    6. Click on the Connections icon next to the file name 48-04.docx, 
+
+    - How did this file get on the computer?.
+    - What URL was this file downloaded from? 
+    - What was the date and time of the download? 
+    - What browser was used to download the file? 
+    - Where was this document saved on the computer? 
+    - Was the document saved anywhere else? 
+    - Was the document opened? Yes. Opened with Word.
+    - Was the document distributed to anyone? 
+
+
+
+QUESTIONS on OS part 2 Module (9)
+    1. What activity was conducted after the user connected the USB Kingston DataTraveler 2.0 USB device last.
+    2. What is the name of the last thumb drive that was last connected to the computer? When was this drive last connected to the computer?
+
+    3. In Artifacts explorer, select the UserAssist artifact category.. How many times has each user run Chrome? What their focus count and time
+    4. In UserAssist, Click on the File Name Chrome for the user RJennings. In the Details pane, click on the source link under Location that ends with\Count. This will take you to the registry and display all entries in \Count. Under the column Name, note the file names. Do any of these make sense? Its obfuscated using rotational cipher, decode it. 
+
+    5. Go to Operating System > LNK Files. Find the results for any LNK files that are links to a removeable drive.
+
+
+    6. Select the Jump Lists category ,do a reverse sort by the Linked Path column  (arrow down). How many different Linked Path drive letters are there? 
+    7. Apply a filter to the Volume Name so that only Jump lists associated with the drive SECRET are displayed. For Potential App Name, which apps were used to open files? 
+
+    8. Explore PREFETCH – CHROME.exe details
+    9. Select the artifact category MRU Opened/Saved Files.. What was the most recent file that was open on the computer?
+    10. What is the name of the most recent .mov file that was accessed on the computer? What program was used to open the file
+    11. Was the above file opened from the hard drive or from an external drive?
+    12. When viewing the folder C:\Users\ryanJ\Downloads last, what view mode did the user use?
+    13. When was the last interaction with the folder \Desktop\Research?
+
+    14. From the Filter Bar, filter the Artifacts dropdown so that only artifacts related to Windows Event Logs are displayed. Let’s see if we can determine the wireless networks to which the computer has connected.
+
+The Event ID for the event is 8000. Filter on Event ID so that only entries 8000 are being shown. Next, right-click the Event ID column in the Evidence pane and select “Filter on column.” In the Filter options popup window, set the “Number is” value to “Equal to” and enter the desired numeric Event ID value
+
+    15. Select the artifact category Windows Event Logs – User Events. For the column Event Description Summary, apply an advanced filter using the terms “logged on” 
+For the column Target Username, apply a filter using the term ‘RJennings.’
+Click on the Created Date/Time to put the records in chronological order. The Logged On history for the account RJennings is now displayed. Similarly can find the Logged Off history
+
+    16. navigate to the Recycle Bin and select the document related to the Anarchists Cookbook.
+In the Details Pane, note the following information about the file: Deleted 9/9/2022, SID -1001, Original Path \Users\ryanJ\Downloads.  
+Note that the information in Artifacts Explorer was parsed from the source file $I31OMY1.pdf.
+Click on the Source link in the Details Pane to switch to File System explorer.
+In the Evidence Pane, select the file $R31OMY1.pdf. Note that this is the actual document.
+Select the corresponding $I file, $I31OMY1.pdf. In the Details Pane, view the hex code and observe the original file location. This matches what we saw in Artifacts Explorer.
+Beginning at offset 016, sweep the hex code to offset 23. View the data in the DECODE section of the Details Pane. Note the date that is decoded. This matches what we saw in Artifacts Explorer.
+

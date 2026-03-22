@@ -1,0 +1,35 @@
+﻿Questions and Activities based on Module 3 and Module 4 of Magnet Axiom 
+Module 3 – OS part 1
+    1. Locate user accounts and user specific hives.
+    2. Identify the allocated and unallocated area in bytes on the disk
+    3. How can an investigator confirm if the accused has reinstalled the OS trying to destroy potential evidence. How can the investigator get the original OS installation date.
+    4. What is the timezone information of the imaged system.
+    5. Go to User Accounts and click on the account for RJennings. Note that the account Security Identifier (SID) ends in -1002. This is known as the Relative Identifier (RID).
+In the Details pane, there is a source link for SAM\Domains\Account\Users\000003EA. Click on that link and it will take you to Registry view.
+In Registry view, in the Evidence pane, click on the F value.  In the Details pane, note the HEX view and each value listed.
+Find Last Login Time from F value.
+    6. What is the internet user name associated with user account Ryan
+    7. What did the HEX code for ShutdownTime decode as? Create a new artifact under EXAMINER DEFINED Registry snippets.  Tag this as “Last Shutdown Hex Code"
+    8. How many user created accounts are there and what are the RIDs of their SIDs? Two accounts
+    9. How many times has each account logged in? 
+    10. Are the accounts password protected? 
+    11. Has either account ever entered an incorrect password when attempting to log in, is what’s the time and date?  
+    12. What is the email address of the registered owner of the operating system? 
+    13. Which user account was created first on the computer? 
+    14. When the computer was last connected to the Ethernet adapter, it was assigned an IP address of 172.11.92.147.  How long is the lease period for this IP address? 
+    15. True or False.  The program OneDrive is configured to startup when the computer starts and is configured to run in the background. 
+    16. What version of the program Signal is installed on the computer?
+Module 4 – Encryption and Credentials
+    1. How does an investigator deal with Bitlocker encryption
+
+The program CCleaner was located on the computer. Answer the following questions about the program
+    2. What web site did the user download the program from and what is the end date/time of the download? 
+    3. What web browser was used to download it? 
+    4. How did the user locate the web page for download and what search engine was used? 
+    5. When was the last time that the program was run
+The program TOR was also located on the computer. Answer the following questions about the program.
+    6. Where is the program TOR saved on the computer? 
+    7. Has TOR ever been run?  If so, how many times and when was the last time it was run? 
+    8. What search activity is there on the computer five minutes prior to and after TOR was last run?
+    9. At there any .onion Tor URL’s on the computer?  
+
