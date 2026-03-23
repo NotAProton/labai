@@ -103,8 +103,8 @@
   linewidth=0.4pt,
   innertopmargin=2pt,
   innerbottommargin=2pt,
-  innerrightmargin=2pt,
-  innerleftmargin=2pt,
+  innerrightmargin=0pt,
+  innerleftmargin=0pt,
   backgroundcolor=white,
   roundcorner=0pt
 }
@@ -311,7 +311,7 @@ In Axiom, we can find partition information under File System → Disk Name → 
 
 \ansbox{There is a total of \ans{171.26 GB} of unallocated space. Refer to \autoref{tab:partition-unallocated-space} for specific allocation metrics.}
 
-\question{How can an investigator confirm if the accused has reinstalled the OS trying to destroy potential evidence? How can the investigator get the original OS installation date?}
+\question{How can an investigator confirm OS reinstallation and obtain the original installation date?}
 To determine if the OS has been reinstalled, an investigator should:
 
 \begin{enumerate}
@@ -333,34 +333,104 @@ Timezone information can be found in Artifacts → Operating System → Timezone
 
 \ansbox{The timezone of the imaged system is \ans{UTC-05:00 Indiana (East)}.}
 
+\question{Follow the SAM link to decode Last Login Time.}
+
+Navigating to Artifacts → Operating System → User Accounts → RJennings, we find the SID ending in -1002.
+\screenshot{lab5img/extra-01.png}{Axiom Examine v9.11: User Accounts artifact showing RJennings account with SAM link}
+Clicking the SAM link takes us to the registry key \texttt{SAM\textbackslash Domains\textbackslash Account\textbackslash Users\textbackslash 000003EA}.
+\screenshot{lab5img/10.png}{Axiom Examine v9.11: Registry view showing SAM key with F value in HEX}
+We can see the value \texttt{"CF E4 F8 35 99 C6 D8 01"} in HEX view which represents the Last Login Time in Windows FILETIME format. We convert this to a human-readable timestamp using a powershell command:
+\begin{verbatim}
+PS> $hex = "CF E4 F8 35 99 C6 D8 01"
+PS> $bytes = $hex.Split(" ") | ForEach-Object { [Convert]::ToByte($_,16) }
+PS> $fileTime = [BitConverter]::ToInt64($bytes,0)
+PS> [DateTime]::FromFileTimeUtc($fileTime)
+\end{verbatim}
+
+\screenshot{lab5img/11.png}{Windows PowerShell output showing Last Login Time as 12 September 2022 11:17:14}
+
+\ansbox{The Last Login Time for RJennings is \ans{12 September 2022 11:17:14 UTC}.}
+
+\question{What is the internet user name associated with user account Ryan?}
+Navigating to Artifacts → Operating System → User Accounts → ryanJ, we find the "Internet User Name" field which contains the associated internet username.
+\screenshot{lab5img/12.png}{Axiom Examine v9.11: User Accounts artifact showing ryanJ account with Internet User Name field}
+
+\ansbox{The internet user name associated with user account \texttt{ryanJ} is \newline \ans{ryanJennings1842@outlook.com}}.
+
+\question{Decode ShutdownTime and tag it.}
+Switching to the registry view and navigating to \texttt{SYSTEM\textbackslash ControlSet001\textbackslash Control\textbackslash Windows}, we find the value \texttt{"45 24 68 15 50 DE D8 01"} in HEX view which represents the ShutdownTime in Windows FILETIME format. We can view this in a human-readable format by highlighting the value in the Details Pane and looking at the "Windows 64-bit LE" interpretation.
+\screenshot{lab5img/13.png}{Axiom Examine v9.11: Registry view showing ShutdownTime value with Windows 64-bit LE interpretation as 12-10-2022 15:34:12}
+
+We can then right-click the value in the Details Pane and select "Display as Artifact".
+\screenshot[0.8\linewidth]{lab5img/14.png}{Axiom Examine v9.11: Context menu showing "Display as Artifact" option}
+
+We can then tag the artifact with a new tag "last shutdown hex code".
+\screenshot{lab5img/15.png}{Axiom Examine v9.11: Tagging the ShutdownTime artifact with "last shutdown hex code" tag}
+
+\ansbox{The last shutdown was at \ans{12-10-2022 15:34:12}. The artifact is tagged as "last shutdown hex code".}
+
+\question{How many user created accounts are there and what are the RIDs of their SIDs?}
+
+There are two user-created accounts: \texttt{ryanJ} and \texttt{RJennings}. The RIDs of their SIDs can be found in the User Accounts artifact. For \texttt{ryanJ}, the RID is 1001, and for \texttt{RJennings}, the RID is 1002.
+\screenshot{lab5img/16.png}{Axiom Examine v9.11: User Accounts artifact showing with RID and SID of ryanJ}
+\screenshot{lab5img/17.png}{Axiom Examine v9.11: User Accounts artifact showing with RID and SID of RJennings}
+
+\ansbox{There are \ans{2} user-created accounts. The RID of \texttt{ryanJ} is \ans{1001}, and the RID of \texttt{RJennings} is \ans{1002}.}
+
+\question{How many times has each account logged in?}
+
+The number of logins for each account can be found in the "Login Count" field of the User Accounts artifact. 
+
+\ansbox{The account \texttt{ryanJ} has logged in \ans{0} times, while the account \texttt{RJennings} has logged in \ans{6} times.}
+
+\question{When was the last time either account entered an incorrect password attempting to log in?}
+The last time an incorrect password was entered can be found in the "Last Incorrect Password Login Date/Time" field of the User Accounts artifact. Only the \texttt{RJennings} account has a recorded incorrect password attempt, which occurred on 12-09-2022 at 06:11:12.
+\screenshot{lab5img/18.png}{Axiom Examine v9.11: User Accounts artifact showing RJennings account with Last Incorrect Password Login Date/Time field}
+\ansbox{The last incorrect password attempt was for account \texttt{RJennings} on \ans{12-09-2022 at 06:11:12}.}
+
+\question{Are the accounts password protected?}
+The "Password Required" field in the User Accounts artifact indicates whether each account is password protected. Only the \texttt{RyanJ} account is password protected, while the \texttt{RJennings} account is not.
+
+\ansbox{The account \texttt{ryanJ} is password protected, while the account \texttt{RJennings} is not password protected.}
+
+\question{What is the email address of the owner of the operating system?}
+The email address of the owner of the operating system can be found in the "Owner" field of the Operating System Information artifact under Artifacts → Operating System.
+
+\screenshot{lab5img/19.png}{Axiom Examine v9.11: Operating System Information artifact showing Owner field with email address}
+
+\ansbox{The email address of the owner of the operating system is \newline \texttt{ryanJennings1842@outlook.com}.}
+
+\question{Which user account was created first on the computer?}
+The order of RIDs can be used to determine which user account was created first, as lower RIDs are assigned to accounts created earlier. The \texttt{Administrator} account has the lowest RID of 500, indicating it was created first.
+\screenshot{lab5img/20.png}{Axiom Examine v9.11: User Accounts artifact showing RID of Administrator account}
+\ansbox{The \texttt{Administrator} account was created first on the computer, as it has the lowest RID of 500.}
+
+\question{What is the lease period for the IP 172.11.92.147?}
+
+The lease period for the IP address can be found in the Adapter artifact under Artifacts → Operating System → Network Interfaces (Registry). The lease period is calculated as the difference between the "Lease Expires Time" and the "Lease Obtained Time". For the IP address 172.11.92.147, the lease period is 4 hours.
+\screenshot{lab5img/21.png}{Axiom Examine v9.11: DHCP Leases artifact showing lease obtained and expiration times for IP}
+
+\ansbox{The lease period for the IP address is \ans{4 hours}.}
+
+\question{Was OneDrive configured to startup with the computer? Was it configured to run in the background?}
+
+The startup configuration for OneDrive can be found in the "Startup Programs" artifact under Artifacts → Operating System → Startup Items. The background running status can be determined from the "Path" value, which shows the OneDrive executable with the "/background" argument.
+\screenshot{lab5img/22.png}{Axiom Examine v9.11: Startup Programs artifact showing OneDrive with /background argument}
+
+\ansbox{OneDrive was configured to startup with the computer and run in the background, as indicated by the presence of OneDrive in the Startup Programs artifact with the "/background" argument.}
+
+\question{Which version of Signal was installed?}
+The version of Signal can be found in the "Installed Programs" artifact under Artifacts → Application Usage → Installed Programs.
+\screenshot{lab5img/23.png}{Axiom Examine v9.11: Installed Programs artifact showing Signal version}
+
+\ansbox{The version of Signal installed is \ans{5.58.0}.}
+
+%--- MODULE 2: ENCRYPTION AND CREDENTIALS ---------------------------------
 \module{Encryption and Credentials}
 
-\question{Identify the port used for exfiltration}
+\question{What encryption software was used on the system?}
+The encryption software used on the system can be found in the "Installed Programs" artifact
 
-Apply the display filter \texttt{ip.src == 191.19.11.11} to isolate packets originating from the threat actor.
-Inspect the \textbf{Transport Layer} details in the packet dissection panel.
-
-\screenshot{example-image-b}{Wireshark — Filtered view showing repeated SYN packets on port 4444}
-
-The repeated SYN packets confirm a persistent connection attempt on an uncommon port.
-
-\ansbox{The exfiltration port is \ans{4444} (non-standard, typically associated with reverse shells).}
-
-\question{Determine the protocol used in the attack}
-
-Follow the TCP stream (\textbf{right-click → Follow → TCP Stream}) on one of the suspicious packets.
-The stream data reveals cleartext commands consistent with a Netcat-style reverse shell session.
-
-\screenshot{example-image-c}{Wireshark — TCP Stream reconstruction showing shell commands in plaintext}
-
-The lack of encryption and the command-response pattern confirm the protocol in use.
-
-\ansbox{The attack leveraged a raw \ans{TCP reverse shell} (Netcat) over port 4444.}
-
-% ──────────────────────────────────────────────────────────────
-%  ADD MORE MODULES / QUESTIONS BELOW
-%  New module  →  \module{Title}        (resets question counter)
-%  New question →  \question{Title}
-% ──────────────────────────────────────────────────────────────
+\screenshot{example-image-b}{}
 
 \end{document}
