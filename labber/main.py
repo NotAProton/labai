@@ -10,9 +10,9 @@ Options:
     --images-dir PATH     Directory with image-XX.png files  (default: context/lab5)
     --output-images PATH  Directory to write annotated images (default: work/lab5img)
     --output-tex PATH     Path for the generated .tex file   (default: work/main_generated.tex)
-    --region STR          AWS Bedrock region (default: ap-south-1)
+    --region STR          AWS Bedrock region (default: AWS_REGION or ap-south-1)
     --only STR            Process only listed questions, e.g. "3.1,3.2,4.1"
-    --skip-vision         Skip Kimi analysis; just copy+rename images (dry-run mode)
+    --skip-vision         Skip Bedrock analysis; just copy+rename images (dry-run mode)
 """
 import argparse
 import shutil
@@ -62,14 +62,14 @@ def _dummy_analysis(question, img_paths: list[Path]) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(
         prog="python -m labber.main",
-        description="labber — AI forensics lab report pipeline (Kimi K2.5 / AWS Bedrock)",
+        description="labber — AI forensics lab report pipeline (AWS Bedrock / Qwen VL)",
     )
     ap.add_argument("--lab-md",        default="context/lab6/lab6.md")
     ap.add_argument("--solve-md",      default="context/lab6/suggested_solve.md")
     ap.add_argument("--images-dir",    default="context/lab6")
     ap.add_argument("--output-images", default="work/lab6img")
     ap.add_argument("--output-tex",    default="work/main_generated.tex")
-    ap.add_argument("--region",        default="ap-south-1")
+    ap.add_argument("--region",        default=None)
     ap.add_argument(
         "--only",
         default=None,
@@ -79,7 +79,7 @@ def main() -> None:
     ap.add_argument(
         "--skip-vision",
         action="store_true",
-        help="Skip Kimi API calls; just copy/rename images (useful for testing)",
+        help="Skip Bedrock API calls; just copy/rename images (useful for testing)",
     )
     args = ap.parse_args()
 
@@ -143,7 +143,8 @@ def main() -> None:
                 analysis = _dummy_analysis(question, img_paths)
             else:
                 nav_hint = extract_nav_hint(solve_text, question.number)
-                print(f"    [kimi]  sending {len(img_paths)} image(s) to Kimi K2.5 …")
+                region = args.region or "AWS default region"
+                print(f"    [bedrock] sending {len(img_paths)} image(s) to Qwen VL in {region} …")
                 try:
                     analysis = analyze_question(
                         module_title=module.title,
@@ -156,7 +157,7 @@ def main() -> None:
                         region=args.region,
                     )
                     n_imgs = len(analysis.get("images") or [])
-                    print(f"    [kimi]  ✓ received analysis for {n_imgs} image(s)")
+                    print(f"    [bedrock] ✓ received analysis for {n_imgs} image(s)")
                 except Exception as exc:
                     print(f"    [error] vision failed: {exc}", file=sys.stderr)
                     analysis = _dummy_analysis(question, img_paths)
