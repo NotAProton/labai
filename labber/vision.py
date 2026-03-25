@@ -1,9 +1,8 @@
 """
-vision.py — Bedrock Converse image analysis using Qwen VL.
+vision.py — Bedrock analysis pipeline (Step 1 only).
 
-The pipeline sends a forensic lab question plus its screenshots to the
-Bedrock Converse API and receives structured crop/annotation/caption/text
-data as JSON.
+Step 1: Analysis LLM call → crop coordinates + annotation recommendations (text)
+Annotation (Stages 2–4) is handled by bounding_box.py.
 """
 import json
 import os
@@ -14,13 +13,25 @@ from pathlib import Path
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
+from PIL import Image
+
+from .bounding_box import annotate_image
 
 DEFAULT_REGION = (
     os.environ.get("AWS_REGION")
     or os.environ.get("AWS_DEFAULT_REGION")
     or "ap-south-1"
 )
-MODEL_ID = "qwen.qwen3-vl-235b-a22b"
+
+# FIX: Amazon Nova requires Cross-Region Inference Profiles for On-Demand throughput
+if DEFAULT_REGION.startswith("ap-"):
+    MODEL_ID = "moonshotai.kimi-k2.5"
+elif DEFAULT_REGION.startswith("us-"):
+    MODEL_ID = "moonshotai.kimi-k2.5"
+elif DEFAULT_REGION.startswith("eu-"):
+    MODEL_ID = "moonshotai.kimi-k2.5"
+else:
+    MODEL_ID = "moonshotai.kimi-k2.5"  # Fallback
 REQUEST_DELAY = 1.5
 
 _client = None
@@ -42,6 +53,15 @@ def _image_block(path: Path) -> dict:
     fmt = "png" if path.suffix.lower() == ".png" else "jpeg"
     return {"image": {"format": fmt, "source": {"bytes": path.read_bytes()}}}
 
+
+def _image_block_from_bytes(data: bytes, fmt: str = "png") -> dict:
+    """Return a Bedrock Converse API image content block from raw bytes."""
+    return {"image": {"format": fmt, "source": {"bytes": data}}}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 1 SYSTEM PROMPT — Analysis (crop + annotation recommendations as text)
+# ─────────────────────────────────────────────────────────────────────────────
 
 SYSTEM_PROMPT = """\
 You are a forensic lab report assistant. Your ONLY job is to analyze
@@ -108,19 +128,38 @@ annotate, and describe.
 - OneDrive startup configured with /background argument → True
 
 ───────────────────────────────────────────────────────────────────────────
-COORDINATE SYSTEM
+COORDINATE SYSTEM & BOUNDING BOX RULES
 ───────────────────────────────────────────────────────────────────────────
 
 All x/y coordinates you return are FRACTIONS of the ORIGINAL image
 dimensions (width W and height H), in the range [0.0, 1.0].
 
 "crop" trims the image to a sub-region of the original.
-"annotations" are drawn on the cropped image, but their coordinates are
-still expressed in the ORIGINAL image coordinate space.
 
-Crop loosely around the relevant region, usually leaving about 5 percent
-margin, and exclude irrelevant UI where possible, especially the taskbar
-and scrollbar. There should usually be some cropping if screenshots exist.
+CRITICAL CROP RULES:
+1. RETAIN UI CONTEXT: Never crop so tightly that you lose the navigational
+   context. You MUST include column headers, pane titles, or the selected
+   artifact row in the Evidence Pane so the user knows where the data lives.
+2. TRIM DEAD SPACE: Always crop out the Windows taskbar, the main application
+   title bar, and large areas of empty white space.
+3. ALMOST ALWAYS CROP: You must apply a crop to focus the viewer. Do NOT
+   return `null` for a crop unless the evidence physically spans from the
+   absolute top-left to the bottom-right of the monitor.
+
+───────────────────────────────────────────────────────────────────────────
+ANNOTATION RECOMMENDATIONS (TEXT, NOT COORDINATES)
+───────────────────────────────────────────────────────────────────────────
+
+Instead of providing annotation coordinates, describe IN TEXT what should
+be annotated. A separate annotation step will use the cropped image to
+produce precise bounding boxes.
+
+Rules for annotation recommendations:
+1. Be specific: name the exact text, value, cell, or field to highlight.
+2. Maximum 3 recommendations per image.
+3. Describe the location within the AXIOM UI (e.g., "the 'Login Count'
+   value '6' in the Details Pane", "the selected row for 'RJennings' in
+   the Evidence Pane").
 
 ───────────────────────────────────────────────────────────────────────────
 AVAILABLE LATEX MACROS (use these in explanation and answer_latex)
@@ -146,7 +185,10 @@ OUTPUT JSON SCHEMA — return EXACTLY this structure, nothing else
     {
       "source": "image-01.png",
       "crop": [left, top, right, bottom],
-      "annotations": [[left, top, right, bottom]],
+      "annotation_recommendations": [
+        "Describe what to annotate — e.g. 'The Login Count value 6 in the Details Pane next to the field label'",
+        "The selected row for RJennings in the Evidence Pane center table"
+      ],
       "caption": "Axiom Examine v9.11: ...",
       "output_name": "01.png"
     }
@@ -161,25 +203,27 @@ OUTPUT JSON SCHEMA — return EXACTLY this structure, nothing else
   The original filename exactly as given to you.
 
 "crop"
-  [left, top, right, bottom] fractions of the original image. Use null only
-  when the full image is truly needed.
+  [left, top, right, bottom] fractions of the original image. You MUST
+  return a 4-element array trimming dead space (taskbars, blank areas)
+  while keeping AXIOM navigation headers visible. Do NOT use null unless
+  entirely unavoidable.
 
-"annotations"
-  Array of [left, top, right, bottom] arrays in ORIGINAL image fractions.
-  There must be at least one annotation if the question is answerable from
-  the screenshot.
+"annotation_recommendations"
+  Array of 1–3 strings. Each string is a natural-language description of
+  what to annotate on the cropped image. Be specific about the text/value
+  and its location in the UI.
 
 "caption"
-  Must start with "Axiom Examine v9.11: ". Describe the artifact view and
-  what is highlighted.
+  Must start with "Axiom Examine v9.11: " or whichever program is being
+  used. Describe the artifact view and what is highlighted.
 
 "output_name"
   Strip the "image-" prefix from the source filename:
   "image-01.png" → "01.png". Preserve unrelated prefixes.
 
 "explanation"
-  1 to 3 sentences in first-person plural. Describe the AXIOM navigation path
-  and what the screenshot reveals.
+  1 to 3 sentences in first-person plural. Describe the AXIOM navigation
+  path and what the screenshot reveals.
 
 "answer_latex"
   Content for the \\ansbox{} macro. Write a complete grammatical sentence.
@@ -198,8 +242,9 @@ ABSOLUTE RULES
 5. Never contradict the Case Facts listed above.
 6. JSON ESCAPING (CRITICAL): every backslash inside a JSON string value MUST
    be doubled. Write \\\\texttt{}, \\\\ans{}, \\\\newline,
-   \\\\textbackslash{} — NOT \texttt{}, \ans{}, etc.
+   \\\\textbackslash{} — NOT \\texttt{}, \\ans{}, etc.
 """
+
 
 
 def _parse_json(raw: str) -> dict:
@@ -217,7 +262,54 @@ def _parse_json(raw: str) -> dict:
         return json.loads(fixed)
 
 
-def analyze_question(
+# ─────────────────────────────────────────────────────────────────────────────
+# PIL helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def crop_image(image_path: Path, crop_frac: list[float]) -> Image.Image:
+    """
+    Crop an image given fractional [left, top, right, bottom] coordinates.
+    Returns the cropped PIL Image.
+    """
+    img = Image.open(image_path)
+    w, h = img.size
+    left = int(crop_frac[0] * w)
+    top = int(crop_frac[1] * h)
+    right = int(crop_frac[2] * w)
+    bottom = int(crop_frac[3] * h)
+    # Clamp to image bounds
+    left = max(0, min(left, w))
+    top = max(0, min(top, h))
+    right = max(left + 1, min(right, w))
+    bottom = max(top + 1, min(bottom, h))
+    return img.crop((left, top, right, bottom))
+
+
+
+# ────────────────────────────────────────────────────────────────────────��────
+# LLM call helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _call_converse(client, system_prompt: str, content: list[dict],
+                   max_tokens: int = 2048, temperature: float = 0.1) -> str:
+    """Make a single Bedrock Converse call and return the raw text response."""
+    response = client.converse(
+        modelId=MODEL_ID,
+        system=[{"text": system_prompt}],
+        messages=[{"role": "user", "content": content}],
+        inferenceConfig={"maxTokens": max_tokens, "temperature": temperature},
+        serviceTier={'type': 'flex'},
+    )
+    time.sleep(REQUEST_DELAY)
+    return "\n".join(
+        block["text"]
+        for block in response["output"]["message"].get("content", [])
+        if "text" in block
+    ).strip()
+
+
+def _step1_analyze(
+    client,
     module_title: str,
     module_num: int,
     q_num: int,
@@ -225,15 +317,11 @@ def analyze_question(
     q_context: str,
     image_paths: list[Path],
     nav_hint: str,
-    region: str | None = None,
 ) -> dict:
     """
-    Send one lab question plus its screenshots to Bedrock Converse.
-
-    Returns a dict with keys: images, explanation, answer_latex.
-    Retries up to 3 times on API failure, invalid JSON, or missing keys.
+    Step 1: Send original screenshots to LLM for analysis.
+    Returns dict with crop coordinates and text-based annotation recommendations.
     """
-    client = _get_client(region)
     user_prompt = f"""\
 Analyze this forensic lab question and its associated screenshot(s).
 
@@ -251,8 +339,8 @@ Q{module_num}.{q_num}: {q_text}
 {[p.name for p in image_paths] if image_paths else "(no screenshots)"}
 
 Produce the JSON output exactly as specified in the system prompt.
-Carefully choose crop regions and annotation rectangles that highlight the
-evidence answering the question.
+Carefully choose crop regions and write clear annotation recommendations
+describing what should be highlighted.
 """
 
     content: list[dict] = [_image_block(path) for path in image_paths]
@@ -263,32 +351,20 @@ evidence answering the question.
         if attempt > 0:
             time.sleep(1.0)
         try:
-            response = client.converse(
-                modelId=MODEL_ID,
-                system=[{"text": SYSTEM_PROMPT}],
-                messages=[{"role": "user", "content": content}],
-                inferenceConfig={"maxTokens": 2048, "temperature": 0.1},
-            )
-            time.sleep(REQUEST_DELAY)
+            raw = _call_converse(client, SYSTEM_PROMPT, content)
         except (ClientError, BotoCoreError) as exc:
             print(
-                f"    [bedrock] Call failed (attempt {attempt + 1}/3): {exc}",
+                f"    [bedrock] Step 1 call failed (attempt {attempt + 1}/3): {exc}",
                 file=sys.stderr,
             )
             last_error = exc
             continue
 
-        raw = "\n".join(
-            block["text"]
-            for block in response["output"]["message"].get("content", [])
-            if "text" in block
-        ).strip()
-
         try:
             result = _parse_json(raw)
         except json.JSONDecodeError as exc:
             print(
-                f"    [json] Invalid JSON (attempt {attempt + 1}/3): {exc}",
+                f"    [json] Step 1 invalid JSON (attempt {attempt + 1}/3): {exc}",
                 file=sys.stderr,
             )
             print(f"    Raw (first 600 chars): {raw[:600]}", file=sys.stderr)
@@ -301,11 +377,97 @@ evidence answering the question.
             return result
 
         print(
-            f"    [json] Missing keys {missing} (attempt {attempt + 1}/3), retrying…",
+            f"    [json] Step 1 missing keys {missing} (attempt {attempt + 1}/3), retrying…",
             file=sys.stderr,
         )
         last_error = ValueError(f"missing keys: {missing}")
 
     raise RuntimeError(
-        f"All 3 attempts failed for Q{module_num}.{q_num}: {last_error}"
+        f"Step 1 failed after 3 attempts for Q{module_num}.{q_num}: {last_error}"
     )
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main public API
+# ─────────────────────────────────────────────────────────────────────────────
+
+def analyze_question(
+    module_title: str,
+    module_num: int,
+    q_num: int,
+    q_text: str,
+    q_context: str,
+    image_paths: list[Path],
+    nav_hint: str,
+    region: str | None = None,
+    annotation_region: str | None = None,
+    annotation_model: str | None = None,
+) -> dict:
+    """
+    Analysis pipeline for a forensic lab question.
+
+    Step 1: LLM (Qwen via Bedrock) analyzes original images → crop + annotation
+            recommendations (text).  Region / model controlled by *region*.
+    Stages 2–4: Delegated to bounding_box.annotate_image() — Amazon Nova LLM
+            grounding → Tesseract OCR snap → OpenCV Hough-line refinement →
+            PIL drawing.  Region / model controlled by *annotation_region* /
+            *annotation_model*.
+
+    Returns a dict with keys: images, explanation, answer_latex.
+    Each image entry includes final annotation coordinates (pixel coords in
+    cropped-image space) that annotator.py uses for drawing.
+    """
+    client = _get_client(region)
+
+    # ── Step 1: Analysis ────────────────────────────────────────────────────
+    print(f"    [step 1] Analyzing Q{module_num}.{q_num}…", file=sys.stderr)
+    step1_result = _step1_analyze(
+        client, module_title, module_num, q_num,
+        q_text, q_context, image_paths, nav_hint,
+    )
+
+    # ── Step 2: Crop + Annotate each image ──────────────────────────────────
+    path_lookup = {p.name: p for p in image_paths}
+
+    for img_entry in step1_result.get("images", []):
+        source = img_entry.get("source", "")
+        crop_coords = img_entry.get("crop")
+        ann_recs = img_entry.get("annotation_recommendations", [])
+
+        img_path = path_lookup.get(source)
+        if img_path is None or not img_path.exists():
+            print(
+                f"    [warn] Source image '{source}' not found, skipping annotation step",
+                file=sys.stderr,
+            )
+            img_entry["annotations"] = []
+            continue
+
+        # Crop the image
+        if crop_coords and len(crop_coords) == 4:
+            print(f"    [step 2] Cropping {source} → {crop_coords}", file=sys.stderr)
+            cropped = crop_image(img_path, crop_coords)
+        else:
+            print(f"    [step 2] No crop for {source}, using full image", file=sys.stderr)
+            cropped = Image.open(img_path)
+
+        # Stages 2–4: Nova LLM grounding → OCR snap → OpenCV refinement
+        if ann_recs:
+            print(
+                f"    [bbox] Annotating {source} ({len(ann_recs)} recommendation(s))…",
+                file=sys.stderr,
+            )
+            annotations = annotate_image(
+                cropped, ann_recs, q_text,
+                region=annotation_region,
+                model_id=annotation_model,
+            )
+        else:
+            annotations = []
+
+        img_entry["annotations"] = annotations
+        img_entry.pop("annotation_recommendations", None)
+        img_entry["_cropped_pil"] = cropped
+
+    return step1_result

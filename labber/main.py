@@ -70,6 +70,10 @@ def main() -> None:
     ap.add_argument("--output-images", default="work/lab6img")
     ap.add_argument("--output-tex",    default="work/main_generated.tex")
     ap.add_argument("--region",        default=None)
+    ap.add_argument("--annotation-model", default=None, metavar="MODEL_ID",
+                    help="Bedrock model for annotation stages (default: us.amazon.nova-lite-v1:0)")
+    ap.add_argument("--annotation-region", default=None, metavar="REGION",
+                    help="AWS region for annotation stages (default: us-east-1)")
     ap.add_argument(
         "--only",
         default=None,
@@ -155,6 +159,8 @@ def main() -> None:
                         image_paths=img_paths,
                         nav_hint=nav_hint,
                         region=args.region,
+                        annotation_region=args.annotation_region,
+                        annotation_model=args.annotation_model,
                     )
                     n_imgs = len(analysis.get("images") or [])
                     print(f"    [bedrock] ✓ received analysis for {n_imgs} image(s)")
