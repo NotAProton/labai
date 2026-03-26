@@ -40,8 +40,17 @@ except ImportError:  # pragma: no cover
 try:
     from paddleocr import PaddleOCR
     # Initialize singleton to avoid reloading the model on every call
-    # show_log=False prevents Paddle from spamming the console
-    _PADDLE_OCR = PaddleOCR(use_angle_cls=False, lang='en', show_log=False)
+    try:
+        # PaddleOCR >= 3.x API
+        _PADDLE_OCR = PaddleOCR(
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+            lang="en",
+        )
+    except TypeError:
+        # PaddleOCR <= 2.x API
+        _PADDLE_OCR = PaddleOCR(use_angle_cls=False, lang="en")
     _PADDLE_AVAILABLE = True
 except ImportError:  # pragma: no cover
     _PADDLE_AVAILABLE = False
@@ -200,14 +209,12 @@ def _stage2_paddle_snap(img: Image.Image, box: list[int], recommendation: str) -
     left, top, right, bottom = box
     w, h = img.size
 
-    # Asymmetric padding: tight vertical to stay in row, wide horizontal to catch URLs/long values
-    pad_v = max(12, (bottom - top) // 2)
-    pad_h = max(150, (right - left) // 2) 
+    pad = max(12, (bottom - top) // 2)
 
-    reg_l = max(0, left   - pad_h)
-    reg_t = max(0, top    - pad_v)
-    reg_r = min(w, right  + pad_h)
-    reg_b = min(h, bottom + pad_v)
+    reg_l = max(0, left   - pad)
+    reg_t = max(0, top    - pad)
+    reg_r = min(w, right  + pad)
+    reg_b = min(h, bottom + pad)
     
     region = img.crop((reg_l, reg_t, reg_r, reg_b))
     img_np = np.array(region.convert('RGB')) # PaddleOCR works well with numpy arrays
@@ -229,21 +236,18 @@ def _stage2_paddle_snap(img: Image.Image, box: list[int], recommendation: str) -
         return box
 
     try:
-        # Run PaddleOCR
-        result = _PADDLE_OCR.ocr(img_np, cls=False)
+        ocr_lines = _extract_paddle_lines(_PADDLE_OCR, img_np)
     except Exception as exc:
         print(f"    [bbox/ocr] PaddleOCR error: {exc}", file=sys.stderr)
         return box
 
-    if not result or not result[0]:
+    if not ocr_lines:
         return box
 
     matched_boxes = []
     best_overall_ratio = 0.0
 
-    # Paddle returns: [ [ [x1,y1], [x2,y1], [x2,y2], [x1,y2] ], ('text', confidence) ]
-    for line in result[0]:
-        coords, (text, confidence) = line
+    for coords, text, confidence in ocr_lines:
         
         # Skip very low confidence strings
         if confidence < 0.60 or not text.strip():
@@ -279,6 +283,45 @@ def _stage2_paddle_snap(img: Image.Image, box: list[int], recommendation: str) -
         return [max(0, sl - 3), max(0, st - 3), min(w, sr + 3), min(h, sb + 3)]
 
     return box
+
+
+def _extract_paddle_lines(ocr_engine, img_np: np.ndarray) -> list[tuple[list[list[float]], str, float]]:
+    """
+    Normalize PaddleOCR outputs across both old and new APIs.
+
+    Returns a list of tuples: (polygon_points, text, confidence).
+    """
+    lines: list[tuple[list[list[float]], str, float]] = []
+
+    # New PaddleOCR API (>= 3.x)
+    if hasattr(ocr_engine, "predict"):
+        pred_result = ocr_engine.predict(img_np)
+        if pred_result:
+            for page in pred_result:
+                page_payload = page
+                if hasattr(page, "res"):
+                    page_payload = page.res
+                if isinstance(page_payload, dict) and "res" in page_payload:
+                    page_payload = page_payload["res"]
+                if not isinstance(page_payload, dict):
+                    continue
+
+                rec_texts = page_payload.get("rec_texts") or []
+                rec_scores = page_payload.get("rec_scores") or []
+                rec_polys = page_payload.get("rec_polys") or page_payload.get("dt_polys") or []
+
+                count = min(len(rec_texts), len(rec_polys))
+                for i in range(count):
+                    text = str(rec_texts[i])
+                    score = float(rec_scores[i]) if i < len(rec_scores) else 1.0
+                    poly = rec_polys[i]
+                    coords = [[float(pt[0]), float(pt[1])] for pt in poly]
+                    lines.append((coords, text, score))
+
+        if lines:
+            return lines
+
+    return lines
 
 # ── Stage 3: OpenCV ────────────────────────────────────────────────────────
 

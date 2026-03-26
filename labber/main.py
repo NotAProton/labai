@@ -64,10 +64,10 @@ def main() -> None:
         prog="python -m labber.main",
         description="labber — AI forensics lab report pipeline (AWS Bedrock / Qwen VL)",
     )
-    ap.add_argument("--lab-md",        default="context/lab6/lab6.md")
-    ap.add_argument("--solve-md",      default="context/lab6/suggested_solve.md")
-    ap.add_argument("--images-dir",    default="context/lab6")
-    ap.add_argument("--output-images", default="work/lab6img")
+    ap.add_argument("--lab-md",        default="context/lab7/lab7.md")
+    ap.add_argument("--solve-md",      default="context/lab7/suggested_solve.md")
+    ap.add_argument("--images-dir",    default="context/lab7")
+    ap.add_argument("--output-images", default="work/lab7img")
     ap.add_argument("--output-tex",    default="work/main_generated.tex")
     ap.add_argument("--region",        default=None)
     ap.add_argument("--annotation-model", default=None, metavar="MODEL_ID",
@@ -84,6 +84,11 @@ def main() -> None:
         "--skip-vision",
         action="store_true",
         help="Skip Bedrock API calls; just copy/rename images (useful for testing)",
+    )
+    ap.add_argument(
+        "--skip-manual-adjustment",
+        action="store_true",
+        help="Skip the manual bounding box GUI; run fully automated without pausing",
     )
     args = ap.parse_args()
 
@@ -161,6 +166,7 @@ def main() -> None:
                         region=args.region,
                         annotation_region=args.annotation_region,
                         annotation_model=args.annotation_model,
+                        allow_manual_adjustment=not args.skip_manual_adjustment,
                     )
                     n_imgs = len(analysis.get("images") or [])
                     print(f"    [bedrock] ✓ received analysis for {n_imgs} image(s)")
@@ -203,7 +209,7 @@ def main() -> None:
                         shutil.copy2(src_path, dst_path)
                         print(f"    [copy]  {src_name} → {output_name} (fallback)")
 
-            questions_analyses.append((question.number, question.text, analysis))
+            questions_analyses.append((question.number, analysis["question_summary"], analysis))
 
         if questions_analyses:
             modules_data.append((module.title, questions_analyses))

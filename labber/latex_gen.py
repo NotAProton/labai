@@ -21,6 +21,7 @@ _PREAMBLE = r"""% ============================================================
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
+\usepackage{xurl}
 
 % ── Modern Typeface ──────────────────────────────────────────
 \usepackage{sourcesans}
@@ -48,6 +49,14 @@ _PREAMBLE = r"""% ============================================================
 \setstretch{1.25}
 \usepackage{parskip}
 \setlength{\parindent}{0pt}
+
+\newcommand{\mono}[1]{%
+  \hfil\penalty0\hfilneg
+  \begingroup
+    \ttfamily
+    \xurl{#1}%
+  \endgroup
+}
 
 % ── Headers & Footers ────────────────────────────────────────
 \usepackage{fancyhdr}
@@ -167,7 +176,11 @@ _PREAMBLE = r"""% ============================================================
     \centering
     \begin{mdframed}[style=figbox]
       \centering
-      \includegraphics[width=\dimexpr#1-4pt\relax]{#2}
+      \includegraphics[
+        width=\dimexpr#1-4pt\relax,
+        height=0.4\textheight,
+        keepaspectratio
+      ]{#2}
     \end{mdframed}
     \caption{#3}
   \end{figure}%
@@ -176,7 +189,7 @@ _PREAMBLE = r"""% ============================================================
 \newcommand{\ansbox}[1]{%
     \vspace{8pt}%
     \begin{mdframed}[style=answerbox]
-        \textbf{Answer:}\quad #1
+        \textbf{Answer:}\quad \begin{minipage}[t]{\dimexpr\linewidth-3.5cm\relax}#1\end{minipage}
     \end{mdframed}%
 }
 
