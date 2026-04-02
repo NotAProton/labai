@@ -1,0 +1,15 @@
+{
+  "name": "latex-preview-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "express": "^5.1.0",
+    "ws": "^8.18.2"
+  },
+  "packageManager": "pnpm@10.32.1"
+}
