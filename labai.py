@@ -27,7 +27,7 @@ import google.generativeai as genai
 from PIL import Image
 
 # ── Config ──────────────────────────────────────────────────────────────────
-API_KEY = "AIzaSyD1ZvQa1JOjBng0rLoFDxCLTfr_m9gQ_p0"
+API_KEY = "REVOKED"
 MODEL = "gemini-3.1-flash-lite-preview"
 DPI     = 150                          # resolution for page renders
 DELAY   = 1.5                         # seconds between API calls (rate-limit safety)
