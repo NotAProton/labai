@@ -7,3 +7,13 @@ __pycache__/
 *.pyc
 *.log
 *.env
+*.json
+*.jpg
+*.tex
+*.old
+*.aux
+*.out
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz

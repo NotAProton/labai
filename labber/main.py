@@ -90,6 +90,16 @@ def main() -> None:
         action="store_true",
         help="Skip the manual bounding box GUI; run fully automated without pausing",
     )
+    ap.add_argument(
+        "--skip-modify-images",
+        action="store_true",
+        help=(
+            "Skip all image modification (no crop, no Nova/bbox calls, no writes to "
+            "output-images dir). Reads already-processed images from --output-images "
+            "instead of --images-dir, sends them to Qwen for re-analysis/LaTeX, then "
+            "compiles the report. The output-images folder is left untouched."
+        ),
+    )
     args = ap.parse_args()
 
     lab_md       = Path(args.lab_md)
@@ -138,12 +148,22 @@ def main() -> None:
 
             # Resolve image paths
             img_paths: list[Path] = []
-            for img_name in question.images:
-                p = images_dir / img_name
-                if p.exists():
-                    img_paths.append(p)
-                else:
-                    print(f"    [warn] image not found: {p}", file=sys.stderr)
+            if args.skip_modify_images:
+                # Use already-processed images from output_imgs (strip "image-" prefix)
+                for img_name in question.images:
+                    stripped = img_name[len("image-"):] if img_name.startswith("image-") else img_name
+                    p = output_imgs / stripped
+                    if p.exists():
+                        img_paths.append(p)
+                    else:
+                        print(f"    [warn] pre-annotated image not found: {p}", file=sys.stderr)
+            else:
+                for img_name in question.images:
+                    p = images_dir / img_name
+                    if p.exists():
+                        img_paths.append(p)
+                    else:
+                        print(f"    [warn] image not found: {p}", file=sys.stderr)
 
             # Vision analysis
             if args.skip_vision or not img_paths:
@@ -167,6 +187,7 @@ def main() -> None:
                         annotation_region=args.annotation_region,
                         annotation_model=args.annotation_model,
                         allow_manual_adjustment=not args.skip_manual_adjustment,
+                        skip_modify_images=args.skip_modify_images,
                     )
                     n_imgs = len(analysis.get("images") or [])
                     print(f"    [bedrock] ✓ received analysis for {n_imgs} image(s)")
@@ -175,39 +196,45 @@ def main() -> None:
                     analysis = _dummy_analysis(question, img_paths)
 
             # Process images (crop + annotate → output_imgs/)
-            for img_item in analysis.get("images") or []:
-                output_name = (img_item.get("output_name") or "").strip()
-                src_name    = (img_item.get("source") or "").strip()
-                if not output_name or not src_name:
-                    continue
+            if args.skip_modify_images:
+                # Images are already in output_imgs — nothing to write
+                n_imgs = len(analysis.get("images") or [])
+                if n_imgs:
+                    print(f"    [skip-modify-images] {n_imgs} image(s) left unchanged in {output_imgs}")
+            else:
+                for img_item in analysis.get("images") or []:
+                    output_name = (img_item.get("output_name") or "").strip()
+                    src_name    = (img_item.get("source") or "").strip()
+                    if not output_name or not src_name:
+                        continue
 
-                src_path = images_dir / src_name
-                dst_path = output_imgs / output_name
+                    src_path = images_dir / src_name
+                    dst_path = output_imgs / output_name
 
-                if not src_path.exists():
-                    print(f"    [warn] source image missing: {src_path}", file=sys.stderr)
-                    continue
+                    if not src_path.exists():
+                        print(f"    [warn] source image missing: {src_path}", file=sys.stderr)
+                        continue
 
-                if args.skip_vision:
-                    shutil.copy2(src_path, dst_path)
-                    print(f"    [copy]  {src_name} → {output_name}")
-                else:
-                    try:
-                        process_image(src_path, img_item, dst_path)
-                        cropped = img_item.get("crop") is not None
-                        annotated = bool(img_item.get("annotations"))
-                        flags = []
-                        if cropped:
-                            flags.append("cropped")
-                        if annotated:
-                            flags.append(f"{len(img_item['annotations'])} annotation(s)")
-                        flag_str = ", ".join(flags) if flags else "full image"
-                        print(f"    [img]   {src_name} → {output_name} ({flag_str})")
-                    except Exception as exc:
-                        print(f"    [warn] image processing failed for {src_name}: {exc}",
-                              file=sys.stderr)
+                    if args.skip_vision:
                         shutil.copy2(src_path, dst_path)
-                        print(f"    [copy]  {src_name} → {output_name} (fallback)")
+                        print(f"    [copy]  {src_name} → {output_name}")
+                    else:
+                        try:
+                            process_image(src_path, img_item, dst_path)
+                            cropped = img_item.get("crop") is not None
+                            annotated = bool(img_item.get("annotations"))
+                            flags = []
+                            if cropped:
+                                flags.append("cropped")
+                            if annotated:
+                                flags.append(f"{len(img_item['annotations'])} annotation(s)")
+                            flag_str = ", ".join(flags) if flags else "full image"
+                            print(f"    [img]   {src_name} → {output_name} ({flag_str})")
+                        except Exception as exc:
+                            print(f"    [warn] image processing failed for {src_name}: {exc}",
+                                  file=sys.stderr)
+                            shutil.copy2(src_path, dst_path)
+                            print(f"    [copy]  {src_name} → {output_name} (fallback)")
 
             questions_analyses.append((question.number, analysis["question_summary"], analysis))
 
